@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Scam Analyzer</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>AI Scam Analyzer</h1>
+
+        <form action="/analyze" method="POST">
+
+            <textarea
+                name="message"
+                placeholder="Enter a message to analyze"
+                maxlength="5000"
+                required
+            ></textarea>
+
+            <button type="submit" id="analyzeButton">
+                Analyze
+            </button>
+
+        </form>
+
+    </div>
+
+
+    {% if error %}
+
+    <div class="error">
+        {{ error }}
+    </div>
+
+    {% endif %}
+
+
+    {% if result %}
+
+    <div class="results">
+
+        <h2 class="
+            {% if result.verdict == 'Scam' %}
+                scam
+            {% elif result.verdict == 'Safe' %}
+                safe
+            {% else %}
+                suspicious
+            {% endif %}
+        ">
+            Verdict: {{ result.verdict }}
+        </h2>
+
+
+        <h3 class="
+            {% if result.risk == 'High' %}
+                high-risk
+            {% elif result.risk == 'Medium' %}
+                medium-risk
+            {% else %}
+                low-risk
+            {% endif %}
+        ">
+            Risk: {{ result.risk }}
+        </h3>
+
+
+        <h3>Reasons</h3>
+
+        <ul>
+            {% for reason in result.reasons %}
+                <li>{{ reason }}</li>
+            {% endfor %}
+        </ul>
+
+
+        <h3>Advice</h3>
+
+        <ul>
+            {% for advice in result.advice %}
+                <li>{{ advice }}</li>
+            {% endfor %}
+        </ul>
+
+    </div>
+
+    {% endif %}
+
+<script>
+    const form = document.querySelector("form");
+    const button = document.getElementById("analyzeButton");
+
+    form.addEventListener("submit", function() {
+        button.textContent = "Analyzing...";
+        button.disabled = true;
+    });
+</script>
+
+</body>
+</html>
