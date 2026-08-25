@@ -67,14 +67,13 @@
         ">
             Risk: {{ result.risk }}
         </h3>
-
-        {% if result.urls %}
+{% if result.urls %}
     <h3>Detected URLs</h3>
 
-    <ul>
+    <ul class="detected-urls">
         {% for url in result.urls %}
             <li>
-                {{ url }}
+                <code>{{ url }}</code>
             </li>
         {% endfor %}
     </ul>
