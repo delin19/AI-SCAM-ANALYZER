@@ -68,6 +68,18 @@
             Risk: {{ result.risk }}
         </h3>
 
+        {% if result.urls %}
+    <h3>Detected URLs</h3>
+
+    <ul>
+        {% for url in result.urls %}
+            <li>
+                {{ url }}
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
 
         <h3>Reasons</h3>
 

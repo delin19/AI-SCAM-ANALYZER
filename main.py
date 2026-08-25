@@ -1,12 +1,38 @@
 import os
 from google import genai
 import json
+import re
+from urllib.parse import urlparse
 
 api_key = os.getenv("GEMINI_API_KEY")
 
+def extract_urls(message):
+    pattern = r'https?://[^\s]+'
+    return re.findall(pattern, message)
+
+def check_urls(urls):
+    warnings = []
+
+    for url in urls:
+        if url.startswith("http://"):
+            warnings.append("URL does not use HTTPS.")
+
+        domain = urlparse(url).netloc.lower()
+
+        if domain in ["bit.ly", "tinyurl.com"]:
+            warnings.append(
+                "URL uses a shortened link, which can hide the destination."
+            )
+        if "@" in url:
+            warnings.append("URL contains '@', which can be used to disguise the real destination.")
+
+    return warnings
+
 
 def analyze_message(message):
-    print("API KEY FOUND:", api_key is not None)
+
+    urls = extract_urls(message)
+    url_warnings = check_urls(urls)
     client = genai.Client(api_key=api_key)
     try:
 
@@ -47,6 +73,9 @@ Rules:
 
 Message:
         {message}
+        
+        Urls found in the message:{urls}
+        Url warning: {url_warnings}
         """,
             config=genai.types.GenerateContentConfig(
                 response_mime_type="application/json"
@@ -54,6 +83,17 @@ Message:
         )
 
         result = json.loads(response.text)
+
+        if url_warnings:
+            result["reasons"].extend(url_warnings)
+
+            result["reasons"] = list(dict.fromkeys(result["reasons"]))
+
+            result["advice"].append(
+                "Be cautious when clicking links in the message."
+            )
+
+        result["urls"] = urls
 
         return result
 
@@ -64,17 +104,6 @@ Message:
         raise e
 
 
-def display_results(result):
-
-    print("Verdict: ",result["verdict"])
-    print("Risk: ",result["risk"])
-    print("\nReasons")
-    for reason in result["reasons"]:
-        print("-",reason)
-
-    print("\nAdvice: ")
-    for advice in result["advice"]:
-        print("-",advice)
 
 def validation(result):
     if result is None:
@@ -82,7 +111,6 @@ def validation(result):
 
     if "verdict" not in result:
        return False
-
 
     if "risk" not in result:
         return False
@@ -99,8 +127,12 @@ def validation(result):
     if result["risk"] not in ["High", "Medium", "Low"]:
         return False
 
+    if not isinstance(result["urls"], list):
+        return False
 
     return True
+
+
 
 
 
